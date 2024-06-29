@@ -3,10 +3,11 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
+
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -15,7 +16,7 @@ app.use(
     origin: [
       "https://port-0-test-back-lxlts66g89582f3b.sel5.cloudtype.app",
       "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app",
-      "http://localhost:8080",
+      "http://localhost:3000",
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     preflightContinue: false,
@@ -96,6 +97,7 @@ app.post('/solve-equation', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+// 서버 시작
+app.listen(PORT, function () {
+  console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`);
 });
