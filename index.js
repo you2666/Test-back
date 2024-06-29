@@ -28,8 +28,11 @@ app.use(
 
 app.use(express.json()); // JSON 형식의 요청 본문을 파싱
 
+// 정적 파일 제공 설정
+app.use(express.static('public'));
+
 // 대화 요청을 처리하는 엔드포인트
-app.post('/negative', async (req, res) => {
+app.post('/cat', async (req, res) => {
   const { message } = req.body; // 클라이언트로부터 전달받은 메시지
 
   try {
