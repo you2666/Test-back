@@ -10,6 +10,13 @@ const port = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app/,
+  "Access-Control-Allow-Methods": "POST",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Credentials": "true"
+};
+
 app.use(
   cors({
     origin: [
@@ -23,7 +30,9 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
+
 
 app.post('/solve-equation', async (req, res) => {
   const { equation } = req.body;
