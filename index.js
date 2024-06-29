@@ -31,7 +31,6 @@ app.use(
 );
 
 app.use(express.json());
-
 app.use(express.static('public'));
 
 app.post('/cat', async (req, res) => {
@@ -40,41 +39,46 @@ app.post('/cat', async (req, res) => {
   try {
     console.log("Received message:", message);
 
-    const assistant = await openai.beta.assistants.create({
+    // 1. Assistant 생성
+    const assistant = await openai.assistants.create({
       name: "고양이임",
-      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ",
+      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해.",
       tools: [],
       model: "gpt-4o"
     });
     console.log("Assistant created:", assistant.id);
 
-    const thread = await openai.beta.threads.create();
+    // 2. Thread 생성
+    const thread = await openai.threads.create();
     console.log("Thread created:", thread.id);
 
-    await openai.beta.threads.messages.create(thread.id, {
+    // 3. 사용자 메시지 추가
+    await openai.threads.messages.create(thread.id, {
       role: "user",
       content: message
     });
     console.log("Message added to thread");
 
-    let responseText = '';
-
-    let run = await openai.beta.threads.runs.create({
+    // 4. Run 생성
+    let run = await openai.threads.runs.create({
       thread_id: thread.id,
       assistant_id: assistant.id
     });
     console.log("Run created:", run.id);
 
+    // 5. Run 상태 확인 및 응답 수집
+    let responseText = '';
     while (run.status !== 'completed') {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      run = await openai.beta.threads.runs.retrieve({
+      run = await openai.threads.runs.retrieve({
         thread_id: thread.id,
         run_id: run.id
       });
       console.log("Run status:", run.status);
     }
 
-    const messages = await openai.beta.threads.messages.list({ thread_id: thread.id });
+    // 6. 메시지 목록 가져오기
+    const messages = await openai.threads.messages.list({ thread_id: thread.id });
     messages.forEach((msg) => {
       if (msg.role === 'assistant') {
         responseText += msg.content;
