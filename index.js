@@ -15,7 +15,7 @@ app.use(
   cors({
     origin: [
       "https://port-0-test-back-lxlts66g89582f3b.sel5.cloudtype.app",
-      "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app",
+      "https://web-math-front-lxlts66g89582f3b.sel5.cloudtype.app/",
       "http://localhost:3000",
     ],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
