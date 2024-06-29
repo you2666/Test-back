@@ -7,16 +7,15 @@ import cors from 'cors';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000; // 포트 설정
+const PORT = process.env.PORT || 3000;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // OpenAI API 키 설정
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 if (!process.env.OPENAI_API_KEY) {
   console.error("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.");
   process.exit(1);
 }
 
-// CORS 설정
 app.use(
   cors({
     origin: [
@@ -24,62 +23,65 @@ app.use(
       "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app",
       "http://localhost:3000",
     ],
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 허용할 HTTP 메소드
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     preflightContinue: false,
-    optionsSuccessStatus: 204, // 프리플라이트 요청에 대한 상태 코드
-    credentials: true, // 자격 증명 허용
+    optionsSuccessStatus: 204,
+    credentials: true,
   })
 );
 
-app.use(express.json()); // JSON 형식의 요청 본문을 파싱
+app.use(express.json());
 
-// 정적 파일 제공 설정
 app.use(express.static('public'));
 
-// 대화 요청을 처리하는 엔드포인트
 app.post('/cat', async (req, res) => {
-  const { message } = req.body; // 클라이언트로부터 전달받은 메시지
+  const { message } = req.body;
 
   try {
     const assistant = await openai.beta.assistants.create({
-      name: "고양이임", // 어시스턴트 이름
-      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ", // 어시스턴트 사용 설명
-      tools: [], // 도구 설정 (현재 비어 있음)
-      model: "gpt-4o" // 사용할 모델
+      name: "고양이임",
+      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ",
+      tools: [],
+      model: "gpt-4o"
     });
 
-    const thread = await openai.beta.threads.create(); // 스레드 생성
+    const thread = await openai.beta.threads.create();
 
-    await openai.beta.threads.messages.create(
-      thread.id,
-      {
-        role: "user",
-        content: message // 클라이언트로부터 전달받은 메시지
-      }
-    );
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: message
+    });
 
-    let responseText = ''; // 응답 텍스트를 저장할 변수
+    let responseText = '';
 
-    const run = await openai.beta.threads.runs.create(thread.id, {
+    const run = await openai.beta.threads.runs.create({
+      thread_id: thread.id,
       assistant_id: assistant.id
     });
 
-    const messages = await openai.beta.threads.messages.list(thread.id);
+    while (run.status !== 'completed') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      run = await openai.beta.threads.runs.retrieve({
+        thread_id: thread.id,
+        run_id: run.id
+      });
+    }
+
+    const messages = await openai.beta.threads.messages.list({ thread_id: thread.id });
     messages.forEach((msg) => {
       if (msg.role === 'assistant') {
-        responseText += msg.content; // 어시스턴트의 응답 텍스트를 추가
+        responseText += msg.content;
       }
     });
 
-    res.status(200).json({ response: responseText }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
+    res.status(200).json({ response: responseText });
   } catch (error) {
     console.error("OpenAI API 에러:", error.message);
     console.error(error.stack);
-    res.status(500).json({ error: 'An error occurred', details: error.message }); // 오류 발생 시 500 상태 코드 전송 및 에러 메시지 포함
+    res.status(500).json({ error: 'An error occurred', details: error.message });
   }
 });
 
-// 서버 시작
 app.listen(PORT, function () {
-  console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`); // 서버 실행 알림 메시지
+  console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`);
 });
