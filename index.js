@@ -10,11 +10,19 @@ const port = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-app.use(cors({
-  origin: 'https://your-frontend-url.cohttps://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app/',  // 프론트엔드 URL
-  credentials: true
-}));
-
+app.use(
+  cors({
+    origin: [
+      "https://port-0-test-back-lxlts66g89582f3b.sel5.cloudtype.app/",
+      "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app/",
+      "http://localhost:8080",
+    ],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.post('/solve-equation', async (req, res) => {
