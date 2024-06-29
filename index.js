@@ -10,7 +10,11 @@ const port = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://your-frontend-url.cohttps://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app/',  // 프론트엔드 URL
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.post('/solve-equation', async (req, res) => {
