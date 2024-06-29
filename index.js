@@ -49,7 +49,7 @@ app.post('/cat', async (req, res) => {
 
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: message
+      content: 'message'
     });
 
     let responseText = '';
