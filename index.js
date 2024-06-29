@@ -49,7 +49,7 @@ app.post('/cat', async (req, res) => {
       thread.id,
       {
         role: "user",
-        content: message // 클라이언트로부터 전달받은 메시지
+        content: '반가워 고양이야' // 클라이언트로부터 전달받은 메시지
       }
     );
 
@@ -66,7 +66,10 @@ app.post('/cat', async (req, res) => {
       }
     });
 
-    res.status(200).json({ response: responseText }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
+    res.status(200).json({ 
+      response: responseText 
+    }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
+    
   } catch (error) {
     console.error(error);
     res.status(500).send('An error occurred'); // 오류 발생 시 500 상태 코드 전송
