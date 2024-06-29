@@ -11,6 +11,15 @@ const PORT = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const CORS_URL = "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app"; // 프론트엔드 애플리케이션 URL
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": CORS_URL,
+  "Access-Control-Allow-Methods": "POST",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Credentials": "true"
+};
+
 app.use(
   cors({
     origin: [
