@@ -38,26 +38,32 @@ app.post('/cat', async (req, res) => {
   const { message } = req.body;
 
   try {
+    console.log("Received message:", message);
+
     const assistant = await openai.beta.assistants.create({
       name: "고양이임",
       instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ",
       tools: [],
       model: "gpt-4o"
     });
+    console.log("Assistant created:", assistant.id);
 
     const thread = await openai.beta.threads.create();
+    console.log("Thread created:", thread.id);
 
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: 'message'
+      content: message
     });
+    console.log("Message added to thread");
 
     let responseText = '';
 
-    const run = await openai.beta.threads.runs.create({
+    let run = await openai.beta.threads.runs.create({
       thread_id: thread.id,
       assistant_id: assistant.id
     });
+    console.log("Run created:", run.id);
 
     while (run.status !== 'completed') {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -65,6 +71,7 @@ app.post('/cat', async (req, res) => {
         thread_id: thread.id,
         run_id: run.id
       });
+      console.log("Run status:", run.status);
     }
 
     const messages = await openai.beta.threads.messages.list({ thread_id: thread.id });
@@ -74,6 +81,7 @@ app.post('/cat', async (req, res) => {
       }
     });
 
+    console.log("Response text:", responseText);
     res.status(200).json({ response: responseText });
   } catch (error) {
     console.error("OpenAI API 에러:", error.message);
