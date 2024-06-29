@@ -25,7 +25,11 @@ app.use(
   })
 );
 
+app.use(cors(corsOptions));
 app.use(express.json());
+
+// Pre-flight 요청을 허용
+app.options('*', cors(corsOptions));
 
 app.post('/solve-equation', async (req, res) => {
   const { equation } = req.body;
