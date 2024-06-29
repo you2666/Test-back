@@ -3,18 +3,13 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-// 환경 변수 설정 파일 로드
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-if (!process.env.OPENAI_API_KEY) {
-  console.error("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.");
-  process.exit(1);
-}
 
 app.use(
   cors({
@@ -32,64 +27,77 @@ app.use(
 
 app.use(express.json());
 
-app.use(express.static('public'));
 
-app.post('/cat', async (req, res) => {
-  const { message } = req.body;
+app.post('/solve-equation', async (req, res) => {
+  const { equation } = req.body;
 
   try {
-    console.log("Received message:", message);
-
     const assistant = await openai.beta.assistants.create({
-      name: "고양이임",
-      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ",
-      tools: [],
+      name: "Math Tutor",
+      instructions: "You are a personal math tutor. Write and run code to answer math questions.",
+      tools: [{ type: "code_interpreter" }],
       model: "gpt-4o"
     });
-    console.log("Assistant created:", assistant.id);
 
     const thread = await openai.beta.threads.create();
-    console.log("Thread created:", thread.id);
 
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: message
-    });
-    console.log("Message added to thread");
+    await openai.beta.threads.messages.create(
+      thread.id,
+      {
+        role: "user",
+        content: `I need to solve the equation \`${equation}\`. Can you help me?`
+      }
+    );
 
     let responseText = '';
 
-    let run = await openai.beta.threads.runs.create({
-      thread_id: thread.id,
+    const run = openai.beta.threads.runs.stream(thread.id, {
       assistant_id: assistant.id
     });
-    console.log("Run created:", run.id);
 
-    while (run.status !== 'completed') {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      run = await openai.beta.threads.runs.retrieve({
-        thread_id: thread.id,
-        run_id: run.id
-      });
-      console.log("Run status:", run.status);
-    }
+    run.on('textCreated', (text) => {
+      console.log('\nassistant > ', text);
+      responseText += text;  // Collecting the response text
+    });
 
-    const messages = await openai.beta.threads.messages.list({ thread_id: thread.id });
-    messages.forEach((msg) => {
-      if (msg.role === 'assistant') {
-        responseText += msg.content;
+    run.on('textDelta', (textDelta) => {
+      console.log(textDelta.value);
+      responseText += textDelta.value;  // Collecting the response text
+    });
+
+    run.on('toolCallCreated', (toolCall) => {
+      console.log(`\nassistant > ${toolCall.type}\n\n`);
+    });
+
+    run.on('toolCallDelta', (toolCallDelta) => {
+      if (toolCallDelta.type === 'code_interpreter') {
+        if (toolCallDelta.code_interpreter.input) {
+          console.log(toolCallDelta.code_interpreter.input);
+          responseText += toolCallDelta.code_interpreter.input;  // Collecting the response text
+        }
+        if (toolCallDelta.code_interpreter.outputs) {
+          console.log("\noutput >\n");
+          toolCallDelta.code_interpreter.outputs.forEach(output => {
+            if (output.type === "logs") {
+              console.log(`\n${output.logs}\n`);
+              responseText += output.logs;  // Collecting the response text
+            }
+          });
+        }
       }
     });
 
-    console.log("Response text:", responseText);
-    res.status(200).json({ response: responseText });
+    run.on('end', () => {
+      res.status(200).json({ response: responseText });
+    });
+
   } catch (error) {
-    console.error("OpenAI API 에러:", error.message);
-    console.error(error.stack);
-    res.status(500).json({ error: 'An error occurred', details: error.message });
+    console.error(error);
+    res.status(500).send('An error occurred');
   }
 });
 
+// 서버 시작
 app.listen(PORT, function () {
   console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`);
 });
