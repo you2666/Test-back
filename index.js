@@ -3,14 +3,15 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-
+// 환경 변수 설정 파일 로드
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // 포트 설정
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // OpenAI API 키 설정
 
+// CORS 설정
 app.use(
   cors({
     origin: [
@@ -18,86 +19,62 @@ app.use(
       "https://web-test-front-lxlts66g89582f3b.sel5.cloudtype.app",
       "http://localhost:3000",
     ],
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // 허용할 HTTP 메소드
     preflightContinue: false,
-    optionsSuccessStatus: 204,
-    credentials: true,
+    optionsSuccessStatus: 204, // 프리플라이트 요청에 대한 상태 코드
+    credentials: true, // 자격 증명 허용
   })
 );
 
-app.use(express.json());
+app.use(express.json()); // JSON 형식의 요청 본문을 파싱
 
-
-app.post('/solve-equation', async (req, res) => {
-  const { equation } = req.body;
+// 대화 요청을 처리하는 엔드포인트
+app.post('/negative', async (req, res) => {
+  const { message } = req.body; // 클라이언트로부터 전달받은 메시지
 
   try {
     const assistant = await openai.beta.assistants.create({
-      name: "Math Tutor",
-      instructions: "You are a personal math tutor. Write and run code to answer math questions.",
-      tools: [{ type: "code_interpreter" }],
-      model: "gpt-4o"
+      name: "고양이임", // 어시스턴트 이름
+      instructions: "너는 고양이야. 너의 품종은 암컷 샴고양이고 3살이야. 고양이로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해. ", // 어시스턴트 사용 설명
+      tools: [], // 도구 설정 (현재 비어 있음)
+      model: "gpt-4o" // 사용할 모델
     });
 
-    const thread = await openai.beta.threads.create();
+    const thread = await openai.beta.threads.create(); // 스레드 생성
 
     await openai.beta.threads.messages.create(
       thread.id,
       {
         role: "user",
-        content: `I need to solve the equation \`${equation}\`. Can you help me?`
+        content: message // 클라이언트로부터 전달받은 메시지
       }
     );
 
-    let responseText = '';
+    let responseText = ''; // 응답 텍스트를 저장할 변수
 
-    const run = openai.beta.threads.runs.stream(thread.id, {
+    const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: assistant.id
     });
 
-    run.on('textCreated', (text) => {
-      console.log('\nassistant > ', text);
-      responseText += text;  // Collecting the response text
-    });
-
-    run.on('textDelta', (textDelta) => {
-      console.log(textDelta.value);
-      responseText += textDelta.value;  // Collecting the response text
-    });
-
-    run.on('toolCallCreated', (toolCall) => {
-      console.log(`\nassistant > ${toolCall.type}\n\n`);
-    });
-
-    run.on('toolCallDelta', (toolCallDelta) => {
-      if (toolCallDelta.type === 'code_interpreter') {
-        if (toolCallDelta.code_interpreter.input) {
-          console.log(toolCallDelta.code_interpreter.input);
-          responseText += toolCallDelta.code_interpreter.input;  // Collecting the response text
+    // 전체 응답이 완료된 후에 처리
+    run.on('end', async () => {
+      const messages = await openai.beta.threads.messages.list(thread.id);
+      messages.forEach((msg) => {
+        if (msg.role === 'assistant') {
+          responseText += msg.content; // 어시스턴트의 응답 텍스트를 추가
         }
-        if (toolCallDelta.code_interpreter.outputs) {
-          console.log("\noutput >\n");
-          toolCallDelta.code_interpreter.outputs.forEach(output => {
-            if (output.type === "logs") {
-              console.log(`\n${output.logs}\n`);
-              responseText += output.logs;  // Collecting the response text
-            }
-          });
-        }
-      }
-    });
+      });
 
-    run.on('end', () => {
-      res.status(200).json({ response: responseText });
+      res.status(200).json({ response: responseText }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
     });
 
   } catch (error) {
     console.error(error);
-    res.status(500).send('An error occurred');
+    res.status(500).send('An error occurred'); // 오류 발생 시 500 상태 코드 전송
   }
 });
 
 // 서버 시작
 app.listen(PORT, function () {
-  console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`);
+  console.log(`${PORT}번 포트에서 서버가 실행 중입니다.`); // 서버 실행 알림 메시지
 });
