@@ -3,7 +3,6 @@ import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import cors from 'cors';
 
-
 dotenv.config();
 
 const app = express();
@@ -11,28 +10,17 @@ const PORT = process.env.PORT || 3000;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const CORS_URL = "https://web-math-front-lxlts66g89582f3b.sel5.cloudtype.app/"; // 프론트엔드 애플리케이션 URL
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": CORS_URL,
-  "Access-Control-Allow-Methods": "POST",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Credentials": "true"
+// CORS 설정
+const corsOptions = {
+  origin: [
+    "https://port-0-test-back-lxlts66g89582f3b.sel5.cloudtype.app",
+    "https://web-math-front-lxlts66g89582f3b.sel5.cloudtype.app",
+    "http://localhost:3000",
+  ],
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true,
+  optionsSuccessStatus: 204,
 };
-
-app.use(
-  cors({
-    origin: [
-      "https://port-0-test-back-lxlts66g89582f3b.sel5.cloudtype.app",
-      "https://web-math-front-lxlts66g89582f3b.sel5.cloudtype.app/",
-      "http://localhost:3000",
-    ],
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-    credentials: true,
-  })
-);
 
 app.use(cors(corsOptions));
 app.use(express.json());
