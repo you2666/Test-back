@@ -56,18 +56,14 @@ app.post('/negative', async (req, res) => {
       assistant_id: assistant.id
     });
 
-    // 전체 응답이 완료된 후에 처리
-    run.on('end', async () => {
-      const messages = await openai.beta.threads.messages.list(thread.id);
-      messages.forEach((msg) => {
-        if (msg.role === 'assistant') {
-          responseText += msg.content; // 어시스턴트의 응답 텍스트를 추가
-        }
-      });
-
-      res.status(200).json({ response: responseText }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    messages.forEach((msg) => {
+      if (msg.role === 'assistant') {
+        responseText += msg.content; // 어시스턴트의 응답 텍스트를 추가
+      }
     });
 
+    res.status(200).json({ response: responseText }); // 응답이 끝나면 클라이언트에게 응답 텍스트 전송
   } catch (error) {
     console.error(error);
     res.status(500).send('An error occurred'); // 오류 발생 시 500 상태 코드 전송
