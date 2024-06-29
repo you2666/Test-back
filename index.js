@@ -27,7 +27,6 @@ app.use(
 
 app.use(express.json());
 
-
 app.post('/solve-equation', async (req, res) => {
   const { equation } = req.body;
 
