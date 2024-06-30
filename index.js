@@ -33,8 +33,8 @@ app.post('/solve-equation', async (req, res) => {
 
   try {
     const assistant = await openai.beta.assistants.create({
-      name: "Math Tutor",
-      instructions: "You are a personal math tutor. Write and run code to answer math questions.",
+      name: "수학 선생님",
+      instructions: "당신은 개인 수학 선생님입니다. 코드를 써서 수학 질문에 답해주세요. 친절하게 답해주세요.",
       tools: [{ type: "code_interpreter" }],
       model: "gpt-4o"
     });
@@ -45,7 +45,7 @@ app.post('/solve-equation', async (req, res) => {
       thread.id,
       {
         role: "user",
-        content: `I need to solve the equation \`${equation}\`. Can you help me?`
+        content: `저는 방정식을 풀어야해요 \`${equation}\`. 도와줄 수 있나요?`
       }
     );
 
