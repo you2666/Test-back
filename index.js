@@ -34,8 +34,8 @@ app.post('/solve-equation', async (req, res) => {
 
   try {
     const assistant = await openai.beta.assistants.create({
-      name: "수학 선생님",
-      instructions: "당신은 개인 수학 선생님입니다. 코드를 써서 수학 질문에 답해주세요. 친절하게 답해주세요.",
+      name: "고양이 수학선생임",
+      instructions: "너는 고양이야. 그렇지만 너는 수학 선생님이야. 고양이 수학선생님으로써 인간에게 대답해야해. 대답의 끝은 냥으로 끝나야해.",
       tools: [{ type: "code_interpreter" }], // 코드 인터프리터 도구 설정
       model: "gpt-4o" // 사용할 모델 설정
     });
